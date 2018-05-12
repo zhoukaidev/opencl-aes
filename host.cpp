@@ -38,8 +38,14 @@ int main(int argc, char** argv)
 	size_t globalSize[1] = { memLen / 16 };
 	size_t localSize[1] = { 256 };
 	for (unsigned long i = 0; i < memLen; ++i) {
-		aes[i] = plainText[i%textLen];
-	}
+		int value = (i / 16) % 3;
+		if (value == 0)
+			aes[i] = plainText[i%textLen];
+		else if (value == 1)
+			aes[i] = 0x00;
+		else
+			aes[i] = 0x01;
+ 	}
 	std::clock_t time = clock();
 	cl_mem srcMem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 		sizeof(unsigned char)*memLen, aes, NULL);
@@ -77,13 +83,16 @@ int main(int argc, char** argv)
 	clFinish(commandQueue);
 	time = clock() - time;
 	double totalTime = (double)time / CLOCKS_PER_SEC;
-	std::cout << std::oct;
-	std::cout << "crypto time: " << totalTime << std::endl;
+	std::cout << std::dec;
+	std::cout << "crypto time: " << totalTime <<std::endl;
 	std::cout << "speed:" << (double)(memLen / totalTime / 1024.0f / 1024.0f) << "  MBytes/s" << std::endl;;
 	errNum = clEnqueueReadBuffer(commandQueue, destMem, CL_TRUE, 0, sizeof(unsigned char)*memLen, destAes, 0, NULL, NULL);
 	ocl::CHECK_OPENCL_ERROR(errNum);
 	std::cout << std::hex;
-	for (int j = 0; j < 20; ++j) {
+	for (int j = 0; j < 20; ++j) { // just for test
+		std::cout << std::dec;
+		std::cout << "[" << j << "]: ";
+		std::cout << std::hex;
 		for (int i = 0; i < textLen; ++i) {
 			std::cout << (int)destAes[i+j*16] << " ";
 		}
