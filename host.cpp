@@ -5,23 +5,6 @@
 #include "OCL_Device.h"
 #include "aes_core.h"
 #include <ctime>
-//unsigned char key[16] = { 0x36,0x8a,0xc0,0xf4,
-//0xed,0xcf,0x76,0xa6,
-//0x08,0xa3,0xb6,0x78,
-//0x31,0x31,0x27,0x6e };
-//unsigned int roundkey[44];
-//aes::AesExpandKey(roundkey, key, 16);
-//for (int i = 0; i < 44; ++i) {
-//	unsigned char *tpkey = (unsigned char*)(&roundkey[i]);
-//	std::cout << std::dec;
-//	std::cout << "[" << i << "]: ";
-//	std::cout << std::hex;
-//	for (int j = 0; j < 4; ++j) {
-//
-//		std::cout << (int)tpkey[j] << " ";
-//	}
-//	std::cout << "\n";
-//}
 
 int main(int argc, char** argv)
 {
