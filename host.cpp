@@ -22,12 +22,14 @@ int main(int argc, char** argv)
 	aes_program = ocl::CreateProgram(context, device, "aes_kernel.cl");
 	aes_kernel = clCreateKernel(aes_program, "AES_ECB_Encrypt", &errNum);
 	ocl::CHECK_OPENCL_ERROR(errNum);
-	unsigned char plainText[] = { 0xa3,0xc5,0x08,0x08,0x78,
-							   0xa4,0xff,0xd3,0x00,0xff,
-							   0x36,0x36,0x28,0x5f,0x01,0x02 };
-	unsigned char cipherKey[] = { 0x36,0x8a,0xc0,0xf4,0xed,0xcf,0x76,
-							 0xa6,0x08,0xa3,0xb6,0x78,0x31,0x31,
-							 0x27,0x6e};
+	unsigned char plainText[] = {	0xa3,0xc5,0x08,0x08,
+									0x78,0xa4,0xff,0xd3,
+									0x00,0xff,0x36,0x36,
+									0x28,0x5f,0x01,0x02 };
+	unsigned char cipherKey[] = {	0x36,0x8a,0xc0,0xf4,
+									0xed,0xcf,0x76,0xa6,
+									0x08,0xa3,0xb6,0x78,
+									0x31,0x31,0x27,0x6e};
 	unsigned int *roundkey = new unsigned int[44];
 	aes::AesExpandKey(roundkey, cipherKey, 16);
 	unsigned long textLen = sizeof(plainText);
@@ -74,20 +76,16 @@ int main(int argc, char** argv)
 	ocl::CHECK_OPENCL_ERROR(errNum);
 	errNum = clEnqueueNDRangeKernel(commandQueue, aes_kernel, 1, NULL, globalSize,localSize,0,
 		NULL,NULL);
-	if (errNum != CL_SUCCESS) {
-		std::cout << "error queue kernle" << std::endl;
-		ocl::CHECK_OPENCL_ERROR(errNum);
-		system("pause");
-	}
-	
-	clFinish(commandQueue);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clFinish(commandQueue);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clEnqueueReadBuffer(commandQueue, destMem, CL_TRUE, 0, sizeof(unsigned char)*memLen, destAes, 0, NULL, NULL);
+	ocl::CHECK_OPENCL_ERROR(errNum);
 	time = clock() - time;
 	double totalTime = (double)time / CLOCKS_PER_SEC;
 	std::cout << std::dec;
 	std::cout << "crypto time: " << totalTime <<std::endl;
 	std::cout << "speed:" << (double)(memLen / totalTime / 1024.0f / 1024.0f) << "  MBytes/s" << std::endl;;
-	errNum = clEnqueueReadBuffer(commandQueue, destMem, CL_TRUE, 0, sizeof(unsigned char)*memLen, destAes, 0, NULL, NULL);
-	ocl::CHECK_OPENCL_ERROR(errNum);
 	std::cout << std::hex;
 	for (int j = 0; j < 20; ++j) { // just for test
 		std::cout << std::dec;
@@ -101,5 +99,5 @@ int main(int argc, char** argv)
 	delete[] roundkey;
 	delete[] aes;
 	delete[] destAes;
-	std::cout << std::endl;
+	return 0;
 }
