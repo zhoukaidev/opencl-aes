@@ -28,22 +28,23 @@ int aes::AesExpandKey(unsigned int *roundkey, const unsigned char* key, unsigned
 {
 	if (!roundkey || !key)
 		return -1;
-	//if (keySize != 16 && keySize != 24 && keySize != 32)
-	//	return -2;
-	if (keySize != 16)
+	if (keySize != 16 && keySize != 24)
 		return -2;
-	unsigned round = (keySize / 4) + 6;
-	for (int i = 0; i < keySize / 4; ++i) {
-		roundkey[i] = Ui32(key[0+i*4], key[1+i*4], key[2+i*4], key[3+i*4]);
+	const unsigned Nr = (keySize / 4) + 6;
+	const unsigned Nk = keySize / 4;
+	const unsigned Nb = 4;
+	const unsigned KeyCount = Nb * (Nr + 1);
+	for (int i = 0; i < Nk; ++i) {
+		roundkey[i] = Ui32(key[i*4], key[1+i*4], key[2+i*4], key[3+i*4]);
 	}
-	for (int i = 4; i < round*4+4; ++i) {
+	for (int i = Nk ; i < KeyCount; ++i) {
 		unsigned int t = roundkey[i - 1];
-		unsigned rem = i % 4;
+		unsigned rem = i % Nk;
 		if (0 == rem) {
-			t = Ui32(h_Sbox[gb1(t)] ^ Rcon[i / 4], h_Sbox[gb2(t)], h_Sbox[gb3(t)],
+			t = Ui32(h_Sbox[gb1(t)] ^ Rcon[i / Nk], h_Sbox[gb2(t)], h_Sbox[gb3(t)],
 				h_Sbox[gb0(t)]);
 		}
-		roundkey[i] = roundkey[i - 4] ^ t;
+		roundkey[i] = roundkey[i - Nk] ^ t;
 	}
 	return 0;
 }
