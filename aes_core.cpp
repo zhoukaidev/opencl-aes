@@ -28,7 +28,7 @@ int aes::AesExpandKey(unsigned int *roundkey, const unsigned char* key, unsigned
 {
 	if (!roundkey || !key)
 		return -1;
-	if (keySize != 16 && keySize != 24)
+	if (keySize != 16 && keySize != 24 && keySize != 32)
 		return -2;
 	const unsigned Nr = (keySize / 4) + 6;
 	const unsigned Nk = keySize / 4;
@@ -40,6 +40,9 @@ int aes::AesExpandKey(unsigned int *roundkey, const unsigned char* key, unsigned
 	for (int i = Nk ; i < KeyCount; ++i) {
 		unsigned int t = roundkey[i - 1];
 		unsigned rem = i % Nk;
+		if ((Nk == 8) && ( 0 == (i -4) % Nk)) {
+			t = Ui32(h_Sbox[gb0(t)], h_Sbox[gb1(t)], h_Sbox[gb2(t)], h_Sbox[gb3(t)]);
+		}
 		if (0 == rem) {
 			t = Ui32(h_Sbox[gb1(t)] ^ Rcon[i / Nk], h_Sbox[gb2(t)], h_Sbox[gb3(t)],
 				h_Sbox[gb0(t)]);
