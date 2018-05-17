@@ -31,7 +31,8 @@ int main(int argc, char** argv)
 									0x08,0xa3,0xb6,0x78,
 									0x31,0x31,0x27,0x6e};
 	unsigned int *roundkey = new unsigned int[44];
-	aes::AesExpandKey(roundkey, cipherKey, 16);
+	aes::AesExpandEncryptKey(roundkey, cipherKey, 16);
+
 	unsigned long textLen = sizeof(plainText);
 	unsigned int BlockSize = 256 * 16;
 	unsigned long memLen = (unsigned long)((MemorySize * 1024 * 1024 + BlockSize - 1) / BlockSize) * BlockSize;
@@ -79,7 +80,8 @@ int main(int argc, char** argv)
 	ocl::CHECK_OPENCL_ERROR(errNum);
 	errNum = clFinish(commandQueue);
 	ocl::CHECK_OPENCL_ERROR(errNum);
-	errNum = clEnqueueReadBuffer(commandQueue, destMem, CL_TRUE, 0, sizeof(unsigned char)*memLen, destAes, 0, NULL, NULL);
+	errNum = clEnqueueReadBuffer(commandQueue, destMem, CL_TRUE, 0, sizeof(unsigned char)*memLen, 
+		destAes, 0, NULL, NULL);
 	ocl::CHECK_OPENCL_ERROR(errNum);
 	time = clock() - time;
 	double totalTime = (double)time / CLOCKS_PER_SEC;
@@ -91,8 +93,55 @@ int main(int argc, char** argv)
 		std::cout << std::dec;
 		std::cout << "[" << j << "]: ";
 		std::cout << std::hex;
-		for (int i = 0; i < textLen; ++i) {
+		for (unsigned i = 0; i < textLen; ++i) {
 			std::cout << (int)destAes[i+j*16] << " ";
+		}
+		std::cout << "\n";
+	}
+
+	std::cout << "Start Decrypt..." << std::endl;
+	int descryret = aes::AesExpandDecryptKey(roundkey, cipherKey, 16);
+	if (descryret != 0)
+		std::cout << "Descrypt key expand failure" << std::endl;
+	cl_kernel aes_desKernel = clCreateKernel(aes_program, "AES_ECB_Decrypt", &errNum);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	time = clock();
+	errNum = clEnqueueWriteBuffer(commandQueue, srcMem, CL_TRUE, 0, 
+		sizeof(unsigned char)*memLen, destAes, 0, NULL, NULL);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clEnqueueWriteBuffer(commandQueue, keyMem, CL_TRUE, 0, 
+		sizeof(unsigned int) * 44, roundkey, 0, NULL, NULL);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clSetKernelArg(aes_desKernel, 0, sizeof(cl_mem), &srcMem);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clSetKernelArg(aes_desKernel, 1, sizeof(cl_mem), &destMem);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clSetKernelArg(aes_desKernel, 2, sizeof(cl_mem), &keyMem);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clSetKernelArg(aes_desKernel, 3, sizeof(cl_uint) * 44, NULL);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clSetKernelArg(aes_desKernel, 4, sizeof(cl_uint) * 1024, NULL);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clEnqueueNDRangeKernel(commandQueue, aes_desKernel, 1, NULL, globalSize, localSize, 0,
+		NULL, NULL);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clFinish(commandQueue);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	errNum = clEnqueueReadBuffer(commandQueue, destMem, CL_TRUE, 0, sizeof(unsigned char)*memLen,
+		aes, 0, NULL, NULL);
+	ocl::CHECK_OPENCL_ERROR(errNum);
+	time = clock() - time;
+	double DecryptTime = (double)time / CLOCKS_PER_SEC;
+	std::cout << std::dec;
+	std::cout << "Decrypt time: " << DecryptTime << std::endl;
+	std::cout << "Decrypt speed: " << (double)(memLen / DecryptTime / 1024.0f / 1024.0f) << "  MBytes/s" << std::endl;;
+	std::cout << std::hex;
+	for (int j = 0; j < 20; ++j) { // just for test
+		std::cout << std::dec;
+		std::cout << "[" << j << "]: ";
+		std::cout << std::hex;
+		for (unsigned i = 0; i < textLen; ++i) {
+			std::cout << (int)aes[i + j * 16] << " ";
 		}
 		std::cout << "\n";
 	}

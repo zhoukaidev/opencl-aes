@@ -2,6 +2,8 @@
 
 namespace aes
 {
-	int AesExpandKey(unsigned int *roundkey, const unsigned char *key, 
+	int AesExpandEncryptKey(unsigned int *roundkey, const unsigned char *key, 
+		unsigned keySize);
+	int AesExpandDecryptKey(unsigned int *roundkey, const unsigned char *key,
 		unsigned keySize);
 }
