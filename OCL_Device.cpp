@@ -7,16 +7,19 @@ cl_context ocl::creteContext()
 {
 	cl_int errNum;
 	cl_uint numPlatforms;
-	cl_platform_id firstPlatformId;
+	cl_platform_id firstPlatformId[3]; //at most 3 platform? my system has cpu, intel hd graphic and nvidia graphic! 
 	cl_context context = NULL;
-	errNum = clGetPlatformIDs(1, &firstPlatformId, &numPlatforms);
+	errNum = clGetPlatformIDs(0, NULL, &numPlatforms);
+	//errNum = clGetPlatformIDs(1, &firstPlatformId, &numPlatforms);
+	errNum = clGetPlatformIDs(3, firstPlatformId, &numPlatforms);
 	if (CL_SUCCESS != errNum || numPlatforms <= 0) {
 		std::cerr << "Failed to find any OpenCL platforms." << std::endl;
 		return NULL;
 	}
 	cl_context_properties contextProperties[] = {
 		CL_CONTEXT_PLATFORM,
-		(cl_context_properties)firstPlatformId,
+		(cl_context_properties)firstPlatformId[0], //use the first opencl platform in system
+		//(cl_context_properties)firstPlatformId[1], //use the second opencl platform in system
 		0
 	};
 	context = clCreateContextFromType(contextProperties,
